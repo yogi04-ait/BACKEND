@@ -7,6 +7,8 @@ const validator = require('validator');
 var cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken')
 const authRouter = require('./routes/auth')
+const profileRouter = require('./routes/profile')
+const requestRouter = require('./routes/request')
 app.use(express.json())
 require('dotenv').config();
 
@@ -20,18 +22,19 @@ connectDB().then(() => {
 })
 
 app.use("/", authRouter)
-
-
+app.use("/", profileRouter)
+app.use("/", requestRouter)
 
 
 app.get("/feed", async (req, res) => {
     try {
+
         const token = req.cookies.token;
         if (!token) {
             res.status(400).send({ message: "No token provided" })
         }
         const decode = await jwt.verify(token, process.env.SECERT_KEY);
-        console.log(decode)
+
         const user = await userSchema.findOne({_id:decode.id})
         if(!user){
             res.send("user not found please login")

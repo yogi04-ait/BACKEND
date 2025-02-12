@@ -1,16 +1,16 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+require('dotenv').config()
+
 
 const userSchema = new mongoose.Schema(
     {
         firstName: { type: String, required: true, minLength: 4, maxLength: 50 },
         lastName: { type: String },
         emailId: {
-            type: String, required: true, trim: true, lowercase: true, unique: true, validate(value) {
-                if (!validator.isEmail(value)) {
-                    throw new Error('Invalid email');
-                }
-            }
+            type: String, required: true, trim: true, lowercase: true, unique: true, 
         },
         password: {
             type: String, required: true
@@ -19,7 +19,6 @@ const userSchema = new mongoose.Schema(
         gender: {
             type: String, enum: {
                 values: ['male', 'female', 'other'],
-                // message: '{VALUE} is not a valid gender type',
             },
             validate(value) {
                 if (!["male", "female", "other"].includes(value)) {
@@ -31,5 +30,18 @@ const userSchema = new mongoose.Schema(
 
     }, {timestamps:true}
 )
+
+userSchema.methods.getJWT = async function(){
+        const user = this;
+        const token = await jwt.sign({ _id: user._id }, process.env.SECRET_KEY, { expiresIn: "1D" });
+        return token;
+}
+
+userSchema.methods.validatePassword = async function (passwordInput) {
+    const user = this;
+    const isValidPassword = await bcrypt.compare(passwordInput,user.password );
+    return isValidPassword;
+}
+
 
 module.exports = mongoose.model("User", userSchema);
