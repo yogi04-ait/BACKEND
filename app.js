@@ -1,14 +1,14 @@
 const express = require('express')
 const connectDB = require('./config/database')
 const app = express();
-const userSchema = require("./models/user");
-const bcrypt = require('bcrypt')
-const validator = require('validator');
+const User = require("./models/user");
 var cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken')
 const authRouter = require('./routes/auth')
 const profileRouter = require('./routes/profile')
-const requestRouter = require('./routes/request')
+const requestRouter = require('./routes/request');
+const userRouter = require('./routes/user');
+const {userAuth}  = require("./middleware/auth")
 app.use(express.json())
 require('dotenv').config();
 
@@ -24,21 +24,12 @@ connectDB().then(() => {
 app.use("/", authRouter)
 app.use("/", profileRouter)
 app.use("/", requestRouter)
+app.use("/", userRouter)
 
-
-app.get("/feed", async (req, res) => {
+app.get("/feed",userAuth, async (req, res) => {
     try {
-
-        const token = req.cookies.token;
-        if (!token) {
-            res.status(400).send({ message: "No token provided" })
-        }
-        const decode = await jwt.verify(token, process.env.SECERT_KEY);
-
-        const user = await userSchema.findOne({_id:decode.id})
-        if(!user){
-            res.send("user not found please login")
-        }
+        const user = req.user;
+       
 
         res.send(user)
     } catch (err) {
@@ -50,7 +41,7 @@ app.get("/feed", async (req, res) => {
 app.delete("/deleteuser", async (req, res) => {
     const { email } = req.body;
     try {
-        const user = await userSchema.findOneAndDelete({ email })
+        const user = await User.findOneAndDelete({ email })
         return res.send("User deleted successfully");
     } catch (err) {
         res.status(400).send("Error: " + err)
