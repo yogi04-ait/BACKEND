@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
         firstName: { type: String, required: true, minLength: 4, maxLength: 50 },
         lastName: { type: String },
         emailId: {
-            type: String, required: true, trim: true, lowercase: true, unique: true, 
+            type: String, required: true, trim: true, lowercase: true, unique: true,
         },
         password: {
             type: String, required: true
@@ -25,21 +25,38 @@ const userSchema = new mongoose.Schema(
                     throw new Error("Gender is not a valid type")
                 }
             }
-        }
+        },
+        about: {
+            type: String,
+            default: "Love to connect people around me!",
+        },
+        skills: {
+            type: [String],
+        },
+        photoUrl: {
+            type: String,
+            default: "https://geographyandyou.com/images/user-profile.png",
+            validate(value) {
+                if (!validator.isURL(value)) {
+                    throw new Errow("Invalid photo url");
+                }
+            }
+        },
 
 
-    }, {timestamps:true}
+    }, { timestamps: true }
 )
 
-userSchema.methods.getJWT = async function(){
-        const user = this;
-        const token = await jwt.sign({ _id: user._id }, process.env.SECRET_KEY, { expiresIn: "1D" });
-        return token;
+userSchema.methods.getJWT = function () {
+    const user = this;
+    const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, { expiresIn: "1d" });
+    return token;
 }
+
 
 userSchema.methods.validatePassword = async function (passwordInput) {
     const user = this;
-    const isValidPassword = await bcrypt.compare(passwordInput,user.password );
+    const isValidPassword = await bcrypt.compare(passwordInput, user.password);
     return isValidPassword;
 }
 

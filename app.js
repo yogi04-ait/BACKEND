@@ -1,16 +1,20 @@
 const express = require('express')
 const connectDB = require('./config/database')
 const app = express();
+const cors = require('cors')
 const User = require("./models/user");
 var cookieParser = require('cookie-parser');
-const jwt = require('jsonwebtoken')
 const authRouter = require('./routes/auth')
 const profileRouter = require('./routes/profile')
 const requestRouter = require('./routes/request');
 const userRouter = require('./routes/user');
-const {userAuth}  = require("./middleware/auth")
 app.use(express.json())
 require('dotenv').config();
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+}))
+
 
 app.use(cookieParser())
 connectDB().then(() => {
@@ -26,16 +30,6 @@ app.use("/", profileRouter)
 app.use("/", requestRouter)
 app.use("/", userRouter)
 
-app.get("/feed",userAuth, async (req, res) => {
-    try {
-        const user = req.user;
-       
-
-        res.send(user)
-    } catch (err) {
-        res.status(400).send("Error: " + err)
-    }
-})
 
 
 app.delete("/deleteuser", async (req, res) => {

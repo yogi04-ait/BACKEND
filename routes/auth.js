@@ -30,31 +30,33 @@ authRouter.post("/login", async (req, res) => {
 
         // Find user by email and make sure to include the password field
         const user = await User.findOne({ emailId });
-
         if (!user) {
-            return res.send("Invalid email or password");
+            throw new Error("Invalid credentials");
         }
 
         // Compare entered password with hashed password
         const isValidPassword = await user.validatePassword(password);
-        console.log(isValidPassword)
         if (isValidPassword) {
             const token = await user.getJWT();
+            const { password: _, ...userWithoutPassword } = user.toObject();
             res.cookie("token", token);
-            res.send("Login successful");
+            res.send(userWithoutPassword);
         } else {
             throw new Error("Invalid credentials");
         }
 
     } catch (err) {
-        res.send(err + "");
+        res.status(400).send("ERROR : " + err.message);
     }
 });
 
-authRouter.post("/logout", (req, res) => {
-    res.clearCookie();
-    res.send("Logout successfully !!")
-})
+authRouter.post("/logout", async (req, res) => {
+    res.cookie("token", null, {
+        expires: new Date(Date.now()),
+    });
+    res.send("Logout Successful!!");
+});
+
 
 
 module.exports = authRouter;
